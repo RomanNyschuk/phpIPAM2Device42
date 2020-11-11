@@ -25,6 +25,7 @@ import codecs
 import base64
 import netaddr
 import requests
+from requests.auth import HTTPBasicAuth
 import pymysql as sql
 
 conf = imp.load_source('conf', 'conf')
@@ -65,7 +66,6 @@ class Logger:
     def writer(self, msg):
         if conf.LOGFILE and conf.LOGFILE != '':
             with codecs.open(self.logfile, 'a', encoding='utf-8') as f:
-                # msg = msg.decode('UTF-8', 'ignore')
                 f.write(msg + '\r\n')  # \r\n for notepad
         if self.stdout:
             try:
@@ -91,12 +91,12 @@ class REST:
 
     def uploader(self, data, url):
         payload = data
+        auth = HTTPBasicAuth(self.username, self.password)
         headers = {
-            'Authorization': 'Basic ' + base64.b64encode((self.username + ':' + self.password).encode('utf-8')).decode("utf-8"),
             'Content-Type': 'application/x-www-form-urlencoded'
         }
 
-        r = requests.post(url, data=payload, headers=headers, verify=False)
+        r = requests.post(url, data=payload, headers=headers, auth=auth, verify=False)
         msg = str(payload)
         logger.writer(msg)
         msg = 'Status code: %s' % str(r.status_code)
@@ -112,12 +112,12 @@ class REST:
             pass
 
     def fetcher(self, url):
+        auth = HTTPBasicAuth(self.username, self.password)
         headers = {
-            'Authorization': 'Basic ' + base64.b64encode((self.username + ':' + self.password).encode('utf-8')).decode("utf-8"),
             'Content-Type': 'application/x-www-form-urlencoded'
         }
 
-        r = requests.get(url, headers=headers, verify=False)
+        r = requests.get(url, headers=headers, auth=auth, verify=False)
         return r.text
 
     def post_vrf(self, data):
