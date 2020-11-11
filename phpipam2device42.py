@@ -204,7 +204,6 @@ class DB:
         if not self.con:
             self.connect()
 
-        # with self.con:
         cur = self.con.cursor()
         q = '''
             SELECT devices.hostname, devices.ip_addr, devices.description,
