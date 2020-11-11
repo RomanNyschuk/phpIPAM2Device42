@@ -368,7 +368,7 @@ class DB:
         cur = self.con.cursor()
         q = '''
             SELECT ipaddresses.ip_addr, ipaddresses.description, ipaddresses.mac,
-                   ipaddresses.lastSeen, subnets.subnet, vrf.name, devices.hostname
+                   ipaddresses.lastSeen, subnets.subnet, vrf.name, devices.hostname, ipaddresses.state
             FROM ipaddresses LEFT JOIN subnets ON ipaddresses.subnetId = subnets.id
             LEFT JOIN vrf ON subnets.vrfId = vrf.vrfId
             LEFT JOIN devices ON ipaddresses.switch = devices.id
@@ -381,7 +381,7 @@ class DB:
 
         for line in ips:
             address = {}
-            ip_raw, label, mac, last_seen, subnet, vrf, device = line
+            ip_raw, label, mac, last_seen, subnet, vrf, device, state = line
             subnet = self.convert_ip(int(subnet))
             ip = self.convert_ip(int(ip_raw))
 
@@ -400,6 +400,17 @@ class DB:
 
             if mac is not None:
                 address.update({'macaddress': mac})
+
+            ip_type = "offline"
+            if state == '0':
+                ip_type = "offline"
+            elif state == '1':
+                ip_type = "active"
+            elif state == '2':
+                ip_type = "reserved"
+            elif state == '3':
+                ip_type == "dhcp"
+            address.update({'type': ip_type})
 
             rest.post_ip(address)
 
