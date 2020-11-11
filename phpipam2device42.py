@@ -49,7 +49,7 @@ class Logger:
     def check_log_file(self):
         while 1:
             if os.path.exists(self.logfile):
-                reply = raw_input("[!] Log file already exists. Overwrite or append [O|A]? ")
+                reply = input("[!] Log file already exists. Overwrite or append [O|A]? ")
                 if reply.lower().strip() == 'o':
                     with open(self.logfile, 'w'):
                         pass
@@ -65,13 +65,13 @@ class Logger:
     def writer(self, msg):
         if conf.LOGFILE and conf.LOGFILE != '':
             with codecs.open(self.logfile, 'a', encoding='utf-8') as f:
-                msg = msg.decode('UTF-8', 'ignore')
+                # msg = msg.decode('UTF-8', 'ignore')
                 f.write(msg + '\r\n')  # \r\n for notepad
         if self.stdout:
             try:
-                print msg
+                print(msg)
             except:
-                print msg.encode('ascii', 'ignore') + ' # < non-ASCII chars detected! >'
+                print(msg.encode('ascii', 'ignore') + ' # < non-ASCII chars detected! >')
 
     @staticmethod
     def debugger(msg):
@@ -92,12 +92,12 @@ class REST:
     def uploader(self, data, url):
         payload = data
         headers = {
-            'Authorization': 'Basic ' + base64.b64encode(self.username + ':' + self.password),
+            'Authorization': 'Basic ' + base64.b64encode((self.username + ':' + self.password).encode('utf-8')).decode("utf-8"),
             'Content-Type': 'application/x-www-form-urlencoded'
         }
 
         r = requests.post(url, data=payload, headers=headers, verify=False)
-        msg = unicode(payload)
+        msg = str(payload)
         logger.writer(msg)
         msg = 'Status code: %s' % str(r.status_code)
         logger.writer(msg)
@@ -108,12 +108,12 @@ class REST:
             return r.json()
         except Exception as e:
 
-            print '\n[*] Exception: %s' % str(e)
+            print('\n[*] Exception: %s' % str(e))
             pass
 
     def fetcher(self, url):
         headers = {
-            'Authorization': 'Basic ' + base64.b64encode(self.username + ':' + self.password),
+            'Authorization': 'Basic ' + base64.b64encode((self.username + ':' + self.password).encode('utf-8')).decode("utf-8"),
             'Content-Type': 'application/x-www-form-urlencoded'
         }
 
@@ -184,7 +184,7 @@ class DB:
         :return:
         """
         self.con = sql.connect(host=conf.DB_IP, port=int(conf.DB_PORT), db=conf.DB_NAME,
-                               user=conf.DB_USER, passwd=conf.DB_PWD)
+                               user=conf.DB_USER, password=conf.DB_PWD)
 
     @staticmethod
     def convert_ip(ip_raw):
@@ -204,18 +204,18 @@ class DB:
         if not self.con:
             self.connect()
 
-        with self.con:
-            cur = self.con.cursor()
-            q = '''
-                SELECT devices.hostname, devices.ip_addr, devices.description,
-                       devices.type, devices.vendor, devices.model, deviceTypes.tname
-                FROM devices LEFT JOIN deviceTypes ON devices.type = deviceTypes.tid
-                '''
-            cur.execute(q)
-            db_devs = cur.fetchall()
-            if conf.DEBUG:
-                msg = ('Devices', str(db_devs))
-                logger.debugger(msg)
+        # with self.con:
+        cur = self.con.cursor()
+        q = '''
+            SELECT devices.hostname, devices.ip_addr, devices.description,
+                   devices.type, devices.vendor, devices.model, deviceTypes.tname
+            FROM devices LEFT JOIN deviceTypes ON devices.type = deviceTypes.tid
+            '''
+        cur.execute(q)
+        db_devs = cur.fetchall()
+        if conf.DEBUG:
+            msg = ('Devices', str(db_devs))
+            logger.debugger(msg)
 
         for line in db_devs:
             dev = {}
@@ -248,14 +248,13 @@ class DB:
         if not self.con:
             self.connect()
 
-        with self.con:
-            cur = self.con.cursor()
-            q = "SELECT vrf.name, vrf.description FROM vrf"
-            cur.execute(q)
-            db_vrfs = cur.fetchall()
-            if conf.DEBUG:
-                msg = ('VRFs', str(db_vrfs))
-                logger.debugger(msg)
+        cur = self.con.cursor()
+        q = "SELECT vrf.name, vrf.description FROM vrf"
+        cur.execute(q)
+        db_vrfs = cur.fetchall()
+        if conf.DEBUG:
+            msg = ('VRFs', str(db_vrfs))
+            logger.debugger(msg)
 
         for line in db_vrfs:
             vrf = {}
@@ -280,14 +279,13 @@ class DB:
         if not self.con:
             self.connect()
 
-        with self.con:
-            cur = self.con.cursor()
-            q = "SELECT vlans.name, vlans.number, vlans.description FROM vlans"
-            cur.execute(q)
-            db_vlans = cur.fetchall()
-            if conf.DEBUG:
-                msg = ('VLANs', str(db_vlans))
-                logger.debugger(msg)
+        cur = self.con.cursor()
+        q = "SELECT vlans.name, vlans.number, vlans.description FROM vlans"
+        cur.execute(q)
+        db_vlans = cur.fetchall()
+        if conf.DEBUG:
+            msg = ('VLANs', str(db_vlans))
+            logger.debugger(msg)
 
         for line in db_vlans:
             vlan = {}
@@ -307,20 +305,19 @@ class DB:
         if not self.con:
             self.connect()
 
-        with self.con:
-            cur = self.con.cursor()
-            q = '''
-                SELECT subnets.subnet, subnets.mask, subnets.description,
-                       subnets.vlanId, subnets.masterSubnetId, vrf.name, vlans.number
-                FROM subnets LEFT JOIN vrf ON subnets.vrfId = vrf.vrfId
-                LEFT JOIN vlans ON subnets.vlanId = vlans.vlanId
-                WHERE subnets.isFolder = 0
-                '''
-            cur.execute(q)
-            subnets = cur.fetchall()
-            if conf.DEBUG:
-                msg = ('Subnets', str(subnets))
-                logger.debugger(msg)
+        cur = self.con.cursor()
+        q = '''
+            SELECT subnets.subnet, subnets.mask, subnets.description,
+                   subnets.vlanId, subnets.masterSubnetId, vrf.name, vlans.number
+            FROM subnets LEFT JOIN vrf ON subnets.vrfId = vrf.vrfId
+            LEFT JOIN vlans ON subnets.vlanId = vlans.vlanId
+            WHERE subnets.isFolder = 0
+            '''
+        cur.execute(q)
+        subnets = cur.fetchall()
+        if conf.DEBUG:
+            msg = ('Subnets', str(subnets))
+            logger.debugger(msg)
 
         rest_vrfs = json.loads(rest.get_vrfs())
         rest_vlans = json.loads(rest.get_vlans())
@@ -368,34 +365,29 @@ class DB:
         if not self.con:
             self.connect()
 
-        with self.con:
-            cur = self.con.cursor()
-            q = '''
-                SELECT ipaddresses.ip_addr, ipaddresses.description, ipaddresses.mac,
-                       ipaddresses.lastSeen, subnets.subnet, vrf.name, devices.hostname, ipTags.type
-                FROM ipaddresses LEFT JOIN subnets ON ipaddresses.subnetId = subnets.id
-                LEFT JOIN vrf ON subnets.vrfId = vrf.vrfId
-                LEFT JOIN devices ON ipaddresses.switch = devices.id
-                LEFT JOIN ipTags ON ipaddresses.state = ipTags.id
-                '''
-            cur.execute(q)
-            ips = cur.fetchall()
-            if conf.DEBUG:
-                msg = ('IPs', str(ips))
-                logger.debugger(msg)
+        cur = self.con.cursor()
+        q = '''
+            SELECT ipaddresses.ip_addr, ipaddresses.description, ipaddresses.mac,
+                   ipaddresses.lastSeen, subnets.subnet, vrf.name, devices.hostname
+            FROM ipaddresses LEFT JOIN subnets ON ipaddresses.subnetId = subnets.id
+            LEFT JOIN vrf ON subnets.vrfId = vrf.vrfId
+            LEFT JOIN devices ON ipaddresses.switch = devices.id
+            '''
+        cur.execute(q)
+        ips = cur.fetchall()
+        if conf.DEBUG:
+            msg = ('IPs', str(ips))
+            logger.debugger(msg)
 
         for line in ips:
             address = {}
-            ip_raw, label, mac, last_seen, subnet, vrf, device, ip_type = line
+            ip_raw, label, mac, last_seen, subnet, vrf, device = line
             subnet = self.convert_ip(int(subnet))
             ip = self.convert_ip(int(ip_raw))
 
             address.update({'ipaddress': ip})
             address.update({'label': label})
             address.update({'subnet': subnet})
-
-            if ip_type.lower() in ip_types:
-                address.update({'type': ip_type.lower()})
 
             if last_seen is not None:
                 address.update({'available': 'yes'})
@@ -424,5 +416,5 @@ if __name__ == '__main__':
     logger = Logger(conf.LOGFILE, conf.STDOUT)
     rest = REST()
     main()
-    print '\n[!] Done!'
+    print('\n[!] Done!')
     sys.exit()

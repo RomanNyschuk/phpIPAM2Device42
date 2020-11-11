@@ -10,7 +10,7 @@ This repository contains sample script to take Inventory information from a PHPI
 
 ### Requirements
 -----------------------------
-    * python 2.7.x
+    * python 3.6 and above
     * netaddr (you can install it with pip install netaddr)
     * pymysql (you can install it with pip install pymysql)
     * requests (you can install it with pip install requests or apt-get install python-requests)
