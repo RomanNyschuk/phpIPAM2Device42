@@ -410,7 +410,9 @@ class DB:
                 ip_type = "reserved"
             elif state == '3':
                 ip_type == "dhcp"
-            address.update({'type': ip_type})
+
+            if ip_type.lower() in ip_types:
+                address.update({'type': ip_type.lower()})
 
             rest.post_ip(address)
 
